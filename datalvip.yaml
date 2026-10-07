@@ -1,0 +1,16 @@
+# LLVIP Dataset - 对齐RGB-IR红外可见光行人检测数据集
+# images/: 可见光, image/: 红外 (像素对齐)
+# 单类别: person
+
+path: /home/s-zhangzy/RT-DETR/YOLO-multimodal/datasets/LLVIP/
+
+train: images/train
+val: images/val
+
+# IR图像路径替换: 将images/ → image/
+ir_replace: ['images', 'image']
+
+nc: 1
+
+names:
+  0: person

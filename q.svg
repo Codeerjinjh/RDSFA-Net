@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  File: texture_and_frequency_blocks.svg
+  Description: Schematic diagram for TextureSaliencyExtractor (left) and FrequencyModulation (right).
+  Usage: Save this content to a file named texture_and_frequency_blocks.svg and open with a browser or vector editor.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800">
+  <defs>
+    <style type="text/css"><![CDATA[
+      .bg { fill: #ffffff; }
+      .data { fill: #E8F2FF; stroke: #2b8cff; stroke-width:2; rx:8; }
+      .op { fill: #fff7e6; stroke: #ff9800; stroke-width:2; rx:8; }
+      .freq { fill: #f0e8ff; stroke: #8e44ad; stroke-width:2; rx:8; }
+      .mask { fill: #e9f7ee; stroke: #28a745; stroke-width:2; rx:6; }
+      .small { font: 12px 'Helvetica', Arial, sans-serif; fill:#222; }
+      .title { font: 18px 'Helvetica', Arial, sans-serif; font-weight:700; fill:#111; }
+      .formula { font: 12px 'Courier New', monospace; fill:#111; }
+      .arrow { stroke: #333; stroke-width:2; fill: none; marker-end: url(#arrowhead); }
+      .dashed { stroke-dasharray:6 4; stroke:#666; }
+    ]]></style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#333" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" x="0" y="0" width="1400" height="800"/>
+
+  <!-- Left panel title -->
+  <text class="title" x="80" y="40">TextureSaliencyExtractor — 纹理显著性提取（RGB）</text>
+
+  <!-- Left input -->
+  <rect class="data" x="40" y="70" width="220" height="60"/>
+  <text class="small" x="60" y="100">Input x</text>
+  <text class="small" x="60" y="118">[B, C, H, W] (RGB features)</text>
+
+  <!-- Sobel X block -->
+  <rect class="op" x="40" y="160" width="200" height="60"/>
+  <text class="small" x="56" y="186">Sobel_X Conv</text>
+  <text class="small" x="56" y="204">k=3, pad=1, groups=C</text>
+  <text class="small" x="56" y="222">kernel = [[-1,0,1],... ]</text>
+
+  <!-- Sobel Y block -->
+  <rect class="op" x="40" y="260" width="200" height="60"/>
+  <text class="small" x="56" y="286">Sobel_Y Conv</text>
+  <text class="small" x="56" y="304">k=3, pad=1, groups=C</text>
+
+  <!-- Laplacian block -->
+  <rect class="op" x="40" y="360" width="200" height="60"/>
+  <text class="small" x="56" y="386">Laplacian Conv</text>
+  <text class="small" x="56" y="404">k=3, pad=1, groups=C</text>
+
+  <!-- arrows from input to ops -->
+  <path class="arrow" d="M160,130 L160,160" />
+  <path class="arrow" d="M160,130 L160,260" />
+  <path class="arrow" d="M160,130 L160,360" />
+
+  <!-- gradient magnitude op -->
+  <g>
+    <path class="arrow" d="M240,190 L320,190" />
+    <rect class="op" x="320" y="160" width="220" height="60"/>
+    <text class="small" x="340" y="186">Gradient magnitude</text>
+    <text class="formula" x="340" y="204">sqrt(gx^2 + gy^2 + 1e-6)</text>
+  </g>
+
+  <g>
+    <path class="arrow" d="M240,290 L320,290" />
+    <rect class="op" x="320" y="260" width="220" height="60"/>
+    <text class="small" x="340" y="286">|Laplacian(x)|</text>
+    <text class="small" x="340" y="304">二阶导数绝对值</text>
+  </g>
+
+  <!-- concat -->
+  <path class="arrow" d="M540,190 L620,190" />
+  <path class="arrow" d="M540,290 L620,290" />
+  <rect class="data" x="620" y="160" width="220" height="100"/>
+  <text class="small" x="640" y="190">concat (along channel)</text>
+  <text class="small" x="640" y="208">→ [B, 2C, H, W]</text>
+
+  <!-- fusion conv 1x1 -->
+  <path class="arrow" d="M840,210 L940,210" />
+  <rect class="op" x="940" y="170" width="160" height="80"/>
+  <text class="small" x="960" y="200">Fusion Conv 1x1</text>
+  <text class="small" x="960" y="218">in=2C out=C, init=0.5</text>
+
+  <!-- sigmoid -->
+  <path class="arrow" d="M1100,210 L1160,210" />
+  <rect class="mask" x="1160" y="170" width="160" height="80"/>
+  <text class="small" x="1180" y="200">Sigmoid</text>
+  <text class="small" x="1180" y="218">saliency S(x) ∈ [0,1]</text>
+
+  <!-- saliency output box -->
+  <rect class="data" x="1160" y="270" width="160" height="60"/>
+  <text class="small" x="1176" y="300">S(x)</text>
+  <text class="small" x="1176" y="318">[B, C, H, W] (or [B,1,H,W])</text>
+
+  <!-- small note -->
+  <text class="small" x="40" y="450" fill="#444">注: Sobel/Laplacian 可选择冻结或可训练（当前实现可训练）。</text>
+
+  <!-- Divider -->
+  <line x1="520" y1="20" x2="520" y2="760" stroke="#ddd" stroke-width="2" />
+
+  <!-- Right panel title -->
+  <text class="title" x="600" y="40">FrequencyModulation — 频域调制基础模块</text>
+
+  <!-- Right input -->
+  <rect class="data" x="560" y="70" width="240" height="60"/>
+  <text class="small" x="580" y="100">Input x</text>
+  <text class="small" x="580" y="118">[B, C, H, W]</text>
+
+  <!-- FFT block -->
+  <path class="arrow" d="M680,130 L680,160" />
+  <rect class="freq" x="600" y="160" width="240" height="70"/>
+  <text class="small" x="640" y="200">FFT2D(x) → X(u,v)</text>
+  <text class="small" x="640" y="218">complex [B, C, H, W]</text>
+
+  <!-- amplitude / phase split -->
+  <path class="arrow" d="M720,230 L720,260" />
+  <rect class="data" x="520" y="260" width="220" height="60"/>
+  <text class="small" x="540" y="292">amplitude = |X|</text>
+
+  <rect class="data" x="760" y="260" width="220" height="60"/>
+  <text class="small" x="780" y="292">phase = angle(X)</text>
+
+  <!-- freq mask generation box -->
+  <rect class="mask" x="520" y="350" width="460" height="130"/>
+  <text class="small" x="540" y="380">get_freq_mask(H,W, mask_type)</text>
+  <text class="small" x="540" y="400">u = fftfreq(H), v = fftfreq(W)</text>
+  <text class="small" x="540" y="420">freq_dist = sqrt(u^2+v^2) / max</text>
+  <text class="small" x="540" y="440">high_mask = 1 - exp(-((d-cutoff)^2)/(2σ^2))</text>
+  <text class="small" x="540" y="458">low_mask = exp(-(d^2)/(2*cutoff^2))</text>
+
+  <!-- small radial masks -->
+  <g transform="translate(980,360)">
+    <circle cx="0" cy="0" r="36" fill="#fff" stroke="#28a745" stroke-width="2" />
+    <text class="small" x="50" y="8">low-pass</text>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#8e44ad" stroke-width="2" stroke-dasharray="4 4" />
+    <text class="small" x="50" y="28">high-pass (ring)</text>
+  </g>
+
+  <!-- arrow from amplitude to mask application -->
+  <path class="arrow" d="M640,292 L640,350" />
+  <path class="arrow" d="M640,420 L640,470" />
+  <text class="formula" x="560" y="495">amplitude' = amplitude × modulation</text>
+
+  <!-- modulation box (receives S from left) -->
+  <rect class="mask" x="560" y="500" width="360" height="70"/>
+  <text class="small" x="580" y="528">modulation = 1 + g * S̃(u,v) * M_high(u,v)</text>
+  <text class="small" x="580" y="546">S̃(u,v) ~ mapped saliency (interp or FFT)</text>
+
+  <!-- arrow from S(x) (left) to modulation -->
+  <path class="arrow dashed" d="M1230,300 L990,520" />
+  <text class="small" x="1060" y="430">S(x) → S̃(u,v)</text>
+
+  <!-- reconstruct and IFFT -->
+  <path class="arrow" d="M740,570 L740,610" />
+  <rect class="freq" x="640" y="610" width="220" height="70"/>
+  <text class="small" x="660" y="642">X' = amplitude' * exp(1j*phase)</text>
+  <text class="small" x="660" y="660">IFFT2D(X') → x_spatial_enhanced</text>
+
+  <!-- output box -->
+  <path class="arrow" d="M740,680 L740,720" />
+  <rect class="data" x="640" y="720" width="220" height="60"/>
+  <text class="small" x="660" y="752">x_freq_enhanced</text>
+  <text class="small" x="660" y="770">[B, C, H, W]</text>
+
+  <!-- formula legend at bottom -->
+  <rect x="40" y="520" width="460" height="220" fill="#fbfbfb" stroke="#ddd" rx="6"/>
+  <text class="title" x="60" y="545" style="font-size:14px">关键公式 / 注释</text>
+  <text class="formula" x="60" y="570">gx = Sobel_x(x), gy = Sobel_y(x)</text>
+  <text class="formula" x="60" y="590">gradient = sqrt(gx^2 + gy^2 + 1e-6)</text>
+  <text class="formula" x="60" y="610">S(x) = sigmoid( FusionConv(concat(gradient, |L(x)|)) )</text>
+  <text class="formula" x="60" y="630">X = FFT2D(x), amplitude = |X|, phase = angle(X)</text>
+  <text class="formula" x="60" y="650">mask_high = 1 - exp(-((d-cutoff)^2)/(2σ^2))</text>
+  <text class="formula" x="60" y="670">amplitude' = amplitude * (1 + g * S̃ * mask_high)</text>
+  <text class="formula" x="60" y="690">X' = amplitude' * exp(1j*phase), x' = IFFT2D(X')</text>
+
+  <!-- bottom-right usage note -->
+  <rect x="540" y="720" width="820" height="60" fill="#ffffff" stroke="#eee" rx="6"/>
+  <text class="small" x="560" y="745">使用说明： 将此 SVG 内容保存为文件（texture_and_frequency_blocks.svg），在浏览器或矢量编辑器中打开。可根据需要修改文字、颜色或尺寸。</text>
+</svg>

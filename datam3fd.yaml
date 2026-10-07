@@ -1,0 +1,20 @@
+# M3FD Dataset - 对齐RGB-IR多模态数据集
+# images/: 可见光, image/: 红外 (像素对齐)
+
+path: /home/s-zhangzy/RT-DETR/YOLO-multimodal/datasets/M3FD
+
+train: images/train
+val: images/val
+
+# IR图像路径替换: 将images/ → image/
+ir_replace: ['images', 'image']
+
+nc: 6
+
+names:
+  0: People
+  1: Car
+  2: Bus
+  3: Motorcycle
+  4: Lamp
+  5: Truck

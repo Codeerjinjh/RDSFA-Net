@@ -1,0 +1,136 @@
+================================================================
+PROMPT 1: 整体网络架构图 (发给GPT)
+================================================================
+
+Create a professional academic paper figure of a multimodal object detection network architecture.
+
+Layout: Horizontal left-to-right flow, white background, CVPR/ICCV style.
+
+COLORS:
+- RGB branch: Red (#E74C3C / #FADBD8)
+- IR branch: Orange (#D35400 / #FDEBD0)
+- Fusion: Green (#27AE60, white text)
+- Head: Blue (#2471A3 / #D4E6F1)
+- Arrows: Gray
+
+TITLE at top: "RDSFA-Net: Overall Architecture"
+
+=== LEFT: Input ===
+"RGB+IR Input (6×640×640)" box
+↓ "Channel Split"
+
+=== MIDDLE-LEFT: Two Parallel Branches ===
+
+RGB Branch (top, RED labels):
+HGStem (3→48, /4)
+  ↓
+ModalityHGBlock_RGB Stage1 ×3 (48→128)
+  ↓
+ModalityHGBlock_RGB Stage2 ×3 (96→256) ──┐
+  ↓                                        │
+ModalityHGBlock_RGB Stage3 ×9 (192→768) ──┤
+  ↓                                        │
+ModalityHGBlock_RGB Stage4 ×3 (384→1024) ──┤
+                                            │
+IR Branch (bottom, ORANGE labels):          │
+HGStem (3→48, /4)                           │
+  ↓                                         │
+ModalityHGBlock_IR Stage1 ×3 (48→128)       │
+  ↓                                         │
+ModalityHGBlock_IR Stage2 ×3 (96→256) ─────┼── use dashed arrows to P3 fusion
+  ↓                                         │
+ModalityHGBlock_IR Stage3 ×9 (192→768) ────┼── use dashed arrows to P4 fusion
+  ↓                                         │
+ModalityHGBlock_IR Stage4 ×3 (384→1024) ───┘── use solid arrows to P5 fusion
+
+=== MIDDLE-RIGHT: Fusion (Three GREEN boxes stacked) ===
+RDRFA Fusion (P5): 1024→1024  ← connected from both Stage4
+  "Alignment → Degradation → Fusion"
+RDRFA Fusion (P4): 768→768    ← connected from both Stage3
+RDRFA Fusion (P3): 256→256    ← connected from both Stage2
+
+=== RIGHT: Head ===
+Hybrid Encoder (AIFI) → Bi-FPN → RTDETR Decoder (300 queries) → Detection Output
+
+OUTPUT: 1200×900, vector-style, professional academic format.
+
+
+================================================================
+PROMPT 2: RDRFusion 模块细节图
+================================================================
+
+Create a detailed vertical flow diagram of a fusion module.
+
+TITLE: "RDRFA Fusion Module"
+Subtitle: "Recovery-Driven Degradation-aware Fusion with Alignment"
+
+=== TOP: Two Inputs ===
+Left: "F_rgb (C)" [Red border]
+Right: "F_ir (C)" [Orange border]
+
+↓ arrows into Step 1
+
+=== STEP 1 (YELLOW box, border #F1C40F) ===
+Title: "① DeformableOffsetAlignment"
+
+Inside:
+Concat(F_rgb, F_ir)
+  ↓
+DWConv(2C→C) → ReLU
+  ↓
+DWConv(C→C/4) → ReLU  
+  ↓
+Conv(C/4→2, 3×3) → Tanh → "offset Δ"
+  ↓
+"Grid Sample: F_rgb' = GridSample(F_rgb, grid+Δ)"
+"Grid Sample: F_ir' = GridSample(F_ir, grid-Δ)"
+
+↓ arrow into Step 2
+
+=== STEP 2 (AMBER box, border #F39C12) ===
+Title: "② DegradationEstimator"
+
+Inside:
+Concat(F_rgb', F_ir')
+  ↓
+DWConv(2C→C) → DWConv(C→C/4) → Conv(C/4→5, 3×3) → Sigmoid
+  ↓
+Show five small labeled boxes:
+[D_rgb] [D_ir] [D_blur] [R_rgb] [R_ir]
+
+Below: "F_rgb_clean = F_rgb' × R_rgb" and "F_ir_clean = F_ir' × R_ir"
+
+↓ arrow into Step 3
+
+=== STEP 3 (GREEN box, border #27AE60) ===
+Title: "③ RecoveryGuidedFusion"
+
+Three parallel sub-boxes:
+[SharedConv(Mix) → Fs (C/2)]  [PrivConv_rgb → Fr (C/4)]  [PrivConv_ir → Fi (C/4)]
+
+Below: "FusionProj(Concat[Fs, Fr, Fi]) → F_fusion (C)"
+
+↓ arrow
+
+=== BOTTOM: Output ===
+Dark green box: "F_fusion (C) → Next Layer"
+
+OUTPUT: 1100×850, professional academic style.
+
+
+================================================================
+PROMPT 3: ModalityHGBlock 对比图
+================================================================
+
+Two-column comparison: left RGB block, right IR block.
+
+LEFT COLUMN (RED): "ModalityHGBlock_RGB"
+  Input (C_in) → HGBlock Body (n×LightConv → Concat → SqueezeExcite) → 
+  SpatialAttention (AvgPool+MaxPool → Conv3×3 → Sigmoid) → Output (C_out)
+  Annotation: "Focuses on spatial textures and edges"
+
+RIGHT COLUMN (ORANGE): "ModalityHGBlock_IR"  
+  Input (C_in) → HGBlock Body (same) →
+  ChannelSEAttention (GAP → Conv1×1 → ReLU → Conv1×1 → Sigmoid) → Output (C_out)
+  Annotation: "Focuses on thermal channel responses"
+

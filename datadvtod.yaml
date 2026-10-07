@@ -1,0 +1,20 @@
+# DVTOD Dataset - 未对齐RGB-IR多模态数据集
+# vis1: 可见光图像, ir1: 红外图像 (未像素对齐)
+
+path: /root/autodl-tmp/DVTOD dataset/  # 数据集根目录
+
+train: vis1/images/train  # 训练集可见光图像路径
+val: vis1/images/val      # 验证集可见光图像路径
+
+# IR图像路径替换规则 (vis1 → ir1)
+# 作用: 将vis1/images/train/xxx.jpg → ir1/images/train/xxx.jpg
+ir_replace: ['vis1', 'ir1']
+
+# 类别数
+nc: 3
+
+# 类别名称
+names:
+  0: person
+  1: car
+  2: bicycle

@@ -1,0 +1,88 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# RT-DETR-ResNet50 object detection model with P3-P5 outputs.
+# by: CSDN Limiiiing
+# Parameters
+ch: 6
+nc: 80 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n-cls.yaml' will call yolov8-cls.yaml with scale 'n'
+  # [depth, width, max_channels]
+  l: [1.00, 1.00, 1024]
+ 
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, IN, []]  # 0
+  - [-1, 1, Multiin, [1]]  # 1
+  - [-2, 1, Multiin, [2]]  # 2
+
+  - [1, 1, ConvNormLayer, [32, 3, 2, 1, 'relu']] # 3-P1
+  - [-1, 1, ConvNormLayer, [32, 3, 1, 1, 'relu']] # 4
+  - [-1, 1, ConvNormLayer, [64, 3, 1, 1, 'relu']] # 5
+  - [-1, 1, nn.MaxPool2d, [3, 2, 1]] # 6-P2
+ 
+  - [-1, 2, Blocks, [64,  BasicBlock, 2, False]] # 7
+  - [-1, 2, Blocks, [128, BasicBlock, 3, False]] # 8-P3
+  - [-1, 2, Blocks, [256, BasicBlock, 4, False]] # 9-P4
+  - [-1, 2, Blocks, [512, BasicBlock, 5, False]] # 10-P5
+
+  - [2, 1, ConvNormLayer, [32, 3, 2, 1, 'relu']] # 11-P1
+  - [-1, 1, ConvNormLayer, [32, 3, 1, 1, 'relu']] # 12
+  - [-1, 1, ConvNormLayer, [64, 3, 1, 1, 'relu']] # 13
+  - [-1, 1, nn.MaxPool2d, [3, 2, 1]] # 14-P2
+ 
+  - [-1, 2, Blocks, [64,  BasicBlock, 2, False]] # 15
+  - [-1, 2, Blocks, [128, BasicBlock, 3, False]] # 16-P3
+  - [-1, 2, Blocks, [256, BasicBlock, 4, False]] # 17-P4
+  - [-1, 2, Blocks, [512, BasicBlock, 5, False]] # 18-P5
+
+head:
+  - [10, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 19 input_proj.2
+  - [-1, 1, AIFI, [1024, 8]]
+  - [-1, 1, Conv, [256, 1, 1]]  # 21, Y5, lateral_convs.0
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 22
+  - [9, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 23 input_proj.1
+  - [[-2, -1], 1, Concat, [1]]
+  - [-1, 3, RepC3, [256, 0.5]]  # 25, fpn_blocks.0
+  - [-1, 1, Conv, [256, 1, 1]]  # 26, Y4, lateral_convs.1
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 27
+  - [8, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 28 input_proj.0
+  - [[-2, -1], 1, Concat, [1]]  # 29 cat backbone P4
+  - [-1, 3, RepC3, [256, 0.5]]  # X3 (30), fpn_blocks.1
+ 
+  - [-1, 1, Conv, [256, 3, 2]]  # 31, downsample_convs.0
+  - [[-1, 26], 1, Concat, [1]]  # 32 cat Y4
+  - [-1, 3, RepC3, [256, 0.5]]  # F4 (33), pan_blocks.0
+ 
+  - [-1, 1, Conv, [256, 3, 2]]  # 34, downsample_convs.1
+  - [[-1, 21], 1, Concat, [1]]  # 35 cat Y5
+  - [-1, 3, RepC3, [256, 0.5]]  # F5 (36), pan_blocks.1
+
+  - [18, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 37 input_proj.2
+  - [-1, 1, AIFI, [1024, 8]]
+  - [-1, 1, Conv, [256, 1, 1]]  # 39, Y5, lateral_convs.0
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 40
+  - [17, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 41 input_proj.1
+  - [[-2, -1], 1, Concat, [1]]
+  - [-1, 3, RepC3, [256, 0.5]]  # 43, fpn_blocks.0
+  - [-1, 1, Conv, [256, 1, 1]]  # 44, Y4, lateral_convs.1
+ 
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 45
+  - [16, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 46 input_proj.0
+  - [[-2, -1], 1, Concat, [1]]  # 47 cat backbone P4
+  - [-1, 3, RepC3, [256, 0.5]]  # X3 (48), fpn_blocks.1
+ 
+  - [-1, 1, Conv, [256, 3, 2]]  # 49, downsample_convs.0
+  - [[-1, 44], 1, Concat, [1]]  # 50 cat Y4
+  - [-1, 3, RepC3, [256, 0.5]]  # F4 (51), pan_blocks.0
+ 
+  - [-1, 1, Conv, [256, 3, 2]]  # 52, downsample_convs.1
+  - [[-1, 39], 1, Concat, [1]]  # 53 cat Y5
+  - [-1, 3, RepC3, [256, 0.5]]  # F5 (54), pan_blocks.1
+
+  - [[30, 48], 1, CGAFusion, []]  # 55 cat backbone P3
+  - [[33, 51], 1, CGAFusion, []]  # 56 cat backbone P4
+  - [[36, 54], 1, CGAFusion, []]  # 57 cat backbone P5
+
+  - [[55, 56, 57], 1, RTDETRDecoder, [nc, 256, 300, 4, 8, 3]]  # Detect(P3, P4, P5)
